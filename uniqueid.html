@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+    <link rel="stylesheet" href="styles.css">
+   
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 50%;
+    margin: auto;
+    overflow: hidden;
+    padding: 2rem;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin: 10px 0 5px;
+}
+
+input {
+    padding: 10px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px;
+    background: #28a745;
+    color: white;
+    border: none;
+    margin-top: 20px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #218838;
+}
+
+#result {
+    margin-top: 20px;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registration Form</h2>
+        <form id="registrationForm">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="phone">Phone:</label>
+            <input type="text" id="phone" name="phone" required>
+            <button type="submit">Register</button>
+        </form>
+
+        <h2>Fetch Data</h2>
+        <form id="fetchForm">
+            <label for="uid">Unique ID:</label>
+            <input type="text" id="uid" name="uid" required>
+            <button type="submit">Fetch</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script type="module">
+       // Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getDatabase, ref, push, set, get, child } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyDXuU-dC86Klq9UazrroYT9ly_3DTBqcuM",
+    authDomain: "patrakar-mahavikas-sangh.firebaseapp.com",
+    projectId: "patrakar-mahavikas-sangh",
+    storageBucket: "patrakar-mahavikas-sangh.appspot.com",
+    messagingSenderId: "606732076487",
+    appId: "1:606732076487:web:8391de9fd75b278b8505e2"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+
+document.getElementById('registrationForm').addEventListener('submit', registerUser);
+document.getElementById('fetchForm').addEventListener('submit', fetchUserData);
+
+function registerUser(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+
+    // Generate a unique ID
+    const newUserRef = push(ref(database, 'users'));
+    const uid = newUserRef.key;
+
+    // Push data to Firebase
+    set(newUserRef, {
+        name: name,
+        email: email,
+        phone: phone
+    })
+    .then(() => {
+        alert('User registered successfully! Unique ID: ' + uid);
+        document.getElementById('registrationForm').reset();
+    })
+    .catch((error) => {
+        console.error('Error writing new user to database:', error);
+    });
+}
+
+function fetchUserData(e) {
+    e.preventDefault();
+
+    const uid = document.getElementById('uid').value;
+
+    get(child(ref(database), 'users/' + uid))
+    .then((snapshot) => {
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            document.getElementById('result').innerHTML = `
+                <p><strong>Name:</strong> ${userData.name}</p>
+                <p><strong>Email:</strong> ${userData.email}</p>
+                <p><strong>Phone:</strong> ${userData.phone}</p>
+            `;
+        } else {
+            document.getElementById('result').innerHTML = 'No data available for the provided Unique ID.';
+        }
+    })
+    .catch((error) => {
+        console.error('Error fetching user data:', error);
+    });
+}
+
+    </script>
+    
+</body>
+</html>
