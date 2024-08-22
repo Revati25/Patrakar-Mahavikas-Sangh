@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      .filters {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .filters input,
+      .filters select {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        width: 30%;
+        box-sizing: border-box;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: center;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      button {
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor:not-allowed;
+      }
+      .fa-file {
+        color: grey;
+      }
+      .fa-file:hover {
+        color: #0056b3;
+        cursor:pointer;
+      }
+      .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            padding: 10px 20px;
+            color: white;
+        }
+
+        .navbar .username {
+            font-size: 18px;
+        }
+
+        .navbar .signout-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+
+        .navbar .signout-btn:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  </head>
+
+  <body>
+    <div class="navbar">
+      <div>
+        <div id="username" class="username"></div>
+        <div id="role" class="username"></div>
+      </div>
+      <button id="signout-btn" class="signout-btn">Sign Out</button>
+  </div>
+
+    <h1>Admin Dashboard</h1>
+
+    <div class="filters">
+      <input type="text" id="userIdFilter" placeholder="Filter by User ID" />
+      <input type="text" id="emailFilter" placeholder="Filter by Email" />
+      <select id="statusFilter">
+        <option value="all">All Statuses</option>
+        <option value="approved">Approved</option>
+        <option value="pending">Pending</option>
+      </select>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Email</th>
+          <th>Document</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="user-table-body">
+        <!-- User rows will be added dynamically here -->
+      </tbody>
+    </table>
+    <script type="module">
+      // Example list of users
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        set,
+        get,
+        child,
+        query,
+        orderByChild,
+        equalTo,
+        update,
+      } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDXuU-dC86Klq9UazrroYT9ly_3DTBqcuM",
+        authDomain: "patrakar-mahavikas-sangh.firebaseapp.com",
+        projectId: "patrakar-mahavikas-sangh",
+        storageBucket: "patrakar-mahavikas-sangh.appspot.com",
+        messagingSenderId: "606732076487",
+        appId: "1:606732076487:web:8391de9fd75b278b8505e2",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      const usersRef = ref(db, "users");
+      var usersList = [];
+      let level = localStorage.getItem("role")[1]
+
+      async function fetchUsers() {
+        try {
+          let snapshot = await get(usersRef);
+          if (snapshot.exists()) {
+            let usersSnap = snapshot.val();
+            let users = Object.keys(usersSnap).map((key) => ({
+              id: key,
+              ...usersSnap[key],
+            }));
+            usersList = users;
+            loadUsers(users);
+            window.localStorage.setItem("users", users);
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      }
+
+      function loadUsers(users = []) {
+        const userTableBody = document.getElementById("user-table-body");
+        userTableBody.innerHTML = "";
+
+        const getStatus = (status, approvalLevel) => {
+          switch (status) {
+            case "APPROVED":
+              return "Approved";
+
+            case "REJECTED":
+              return "Rejected";
+
+            default:
+              return "Pending from L" + approvalLevel;
+          }
+        };
+
+        users.forEach((user, ind) => {
+          const row = document.createElement("tr");
+
+          const userIdCell = document.createElement("td");
+          userIdCell.textContent = user.id;
+          row.appendChild(userIdCell);
+
+          const firstnameCell = document.createElement("td");
+          firstnameCell.textContent = user.first_name;
+          row.appendChild(firstnameCell);
+
+          const lastnameCell = document.createElement("td");
+          lastnameCell.textContent = user.last_name;
+          row.appendChild(lastnameCell);
+
+          const emailCell = document.createElement("td");
+          emailCell.textContent = user.email;
+          row.appendChild(emailCell);
+
+          const documentCell = document.createElement("td");
+          documentCell.innerHTML = `
+            <a href="${user.documentURL}" target="_blank">
+              <i class="fa-solid fa-file"></i>
+            </a>
+          `
+          documentCell.className = "document-ic"
+          row.appendChild(documentCell);
+
+          const statusCell = document.createElement("td");
+          statusCell.textContent = getStatus(user.approvalStatus, user.approvalLevel);
+          row.appendChild(statusCell);
+
+          const actionCell = document.createElement("td");
+          const approveButton = document.createElement("button");
+          approveButton.textContent = "Approve";
+          approveButton.disabled = !(user.approvalLevel == level);
+          approveButton.className = "approve-btn"
+          approveButton.onclick = () => approveUser(user.id);
+          actionCell.appendChild(approveButton);
+          const rejectButton = document.createElement("button");
+          rejectButton.textContent = "Reject";
+          rejectButton.disabled = !(user.approvalLevel == level);
+          rejectButton.onclick = () => rejectUser(user.id);
+          rejectButton.style.backgroundColor = "red";
+          rejectButton.style.marginLeft = "10px";
+          actionCell.appendChild(rejectButton);
+          row.appendChild(actionCell);
+
+          userTableBody.appendChild(row);
+        });
+      }
+
+      async function approveUser(userId) {
+        const userRef = ref(db, "users/" + userId);
+        let snapshot = await get(userRef)
+        if(snapshot.exists()) {
+          let user = snapshot.val();
+          console.log(user)
+        }
+
+        update(userRef, { approvalStatus: level == 3 ? "APPROVED": "PENDING", approvalLevel: Number(level) + 1 })
+          .then(() => {
+            alert(userId + " approved!");
+            fetchUsers();
+          })
+          .catch((error) => console.log(error));
+      }
+
+      function rejectUser(userId) {
+        const userRef = ref(db, "users/" + userId);
+
+        update(userRef, { approvalStatus: "REJECT" })
+          .then(() => {
+            alert(userId + " rejected!");
+            fetchUsers();
+          })
+          .catch((error) => console.log(error));
+      }
+
+      function filterUsers() {
+        const userIdFilter = document
+          .getElementById("userIdFilter")
+          .value.toLowerCase();
+        const emailFilter = document
+          .getElementById("emailFilter")
+          .value.toLowerCase();
+        const statusFilter = document.getElementById("statusFilter").value;
+
+        const filteredUsers = usersList.filter((user) => {
+          const matchesUsername = user.id
+            .toLowerCase()
+            .includes(userIdFilter);
+          const matchesEmail = user.email.toLowerCase().includes(emailFilter);
+          const matchesStatus =
+            statusFilter === "all" ||
+            (statusFilter === "approved" &&
+              user.approvalStatus === "APPROVED") ||
+            (statusFilter === "pending" && user.approvalStatus === "PENDING");
+
+          return matchesUsername && matchesEmail && matchesStatus;
+        });
+
+        loadUsers(filteredUsers);
+      }
+
+      function signout() {
+        localStorage.clear();
+        window.location.href = "index.html"
+      }
+
+      function init() {
+        fetchUsers()
+        document.getElementById("username").innerHTML = "Username: " + localStorage.getItem("username")
+        document.getElementById("role").innerHTML = "Role: " +localStorage.getItem("role")
+      }
+
+      // Load the user list when the page loads
+      document
+        .getElementById("userIdFilter")
+        .addEventListener("input", filterUsers);
+      document
+        .getElementById("emailFilter")
+        .addEventListener("input", filterUsers);
+      document
+        .getElementById("statusFilter")
+        .addEventListener("change", filterUsers);
+
+      document.getElementById("signout-btn").addEventListener("click", signout)
+      window.onload = init;
+    </script>
+  </body>
+</html>

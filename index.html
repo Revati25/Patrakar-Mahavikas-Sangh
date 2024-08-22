@@ -535,20 +535,20 @@
     e.preventDefault();
 
     const uid = document.getElementById('uid').value;
-
-    get(child(ref(database), 'users/' + uid))
-    .then((snapshot) => {
-        if (snapshot.exists()) {
-            const userData = snapshot.val();
-            const queryString = new URLSearchParams(userData).toString();
-            window.location.href = `display.html?${queryString}`;
-        } else {
-            alert('No data available for the provided Unique ID.');
-        }
-    })
-    .catch((error) => {
-        console.error('Error fetching user data:', error);
-    });
+    window.location.href = `display.html?uid=${uid}`;
+    // get(child(ref(database), 'users/' + uid))
+    // .then((snapshot) => {
+    //     if (snapshot.exists()) {
+    //         const userData = snapshot.val();
+    //         const queryString = new URLSearchParams(userData).toString();
+    //         window.location.href = `display.html?${uid}`;
+    //     } else {
+    //         alert('No data available for the provided Unique ID.');
+    //     }
+    // })
+    // .catch((error) => {
+    //     console.error('Error fetching user data:', error);
+    // });
 }
      </script>
 </body>

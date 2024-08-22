@@ -835,7 +835,9 @@ async function submitForm(e) {
         birth_date:birth_date,
         pincode:pincode,
         email: email,
-
+        documentURL,
+        approvalStatus: "PENDING",
+        approvalLevel: 1
      }).then(() => {
         alert('Form submitted successfully! Unique ID: ' + uid);
         window.location.href = `display.html?uid=${uid}`;
