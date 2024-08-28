@@ -528,7 +528,14 @@ display-flex, .signup-content, .form-row, .form-radio, .select-icon, .select-ico
                   <h2>Upload Documents</h2>
                   <form id="documentForm">
                       <label for="document">Upload Adhaar:</label>
-                      <input type="file" id="document" name="document" required>
+                      <input type="file" id="doc-adhaar" name="adhaar" required>
+
+                      <label for="document">Upload PAN:</label>
+                      <input type="file" id="doc-pan" name="pan" required>
+
+                      <label for="document">Upload Electricity bill:</label>
+                      <input type="file" id="doc-electricity" name="electricity" required>
+
                       <button type="submit">Submit</button>
                   </form>
               </div>
@@ -816,13 +823,29 @@ async function submitForm(e) {
     const newUserRef = push(ref(database, 'users'));
     const uid = newUserRef.key;
 
-      // Get the document file
-      const documentFile = document.getElementById('document').files[0];
+    let documentsURLs = [];
+    let documentURL = null;
 
-        // Upload the document to Firebase Storage
-    const documentRef = storageRef(storage, `documents/${uid}/${documentFile.name}`);
-    await uploadBytes(documentRef, documentFile);
-    const documentURL = await getDownloadURL(documentRef);
+    // Get the document file
+    const adhaarFile = document.getElementById('doc-adhaar').files[0];
+    const panFile = document.getElementById('doc-pan').files[0];
+    const electricityFile = document.getElementById('doc-electricity').files[0];
+
+    // Upload the document to Firebase Storage
+    const adhaarRef = storageRef(storage, `documents/${uid}/${adhaarFile.name}`);
+    await uploadBytes(adhaarRef, adhaarFile);
+    documentURL = await getDownloadURL(adhaarRef);
+    documentsURLs.push({fileName: "Adhaar Card", documentURL})
+
+    const panRef = storageRef(storage, `documents/${uid}/${panFile.name}`);
+    await uploadBytes(panRef, panFile);
+    documentURL = await getDownloadURL(panRef);
+    documentsURLs.push({fileName: "PAN Card", documentURL})
+
+    const elecRef = storageRef(storage, `documents/${uid}/${electricityFile.name}`);
+    await uploadBytes(elecRef, electricityFile);
+    documentURL = await getDownloadURL(elecRef);
+    documentsURLs.push({fileName: "Electricity Bill",documentURL})
 
      // Push data to Firebase
      set(newUserRef, {
@@ -835,7 +858,7 @@ async function submitForm(e) {
         birth_date:birth_date,
         pincode:pincode,
         email: email,
-        documentURL,
+        documents: [...documentsURLs],
         approvalStatus: "PENDING",
         approvalLevel: 1
      }).then(() => {

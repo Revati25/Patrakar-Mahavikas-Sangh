@@ -227,12 +227,18 @@
           row.appendChild(emailCell);
 
           const documentCell = document.createElement("td");
-          documentCell.innerHTML = `
-            <a href="${user.documentURL}" target="_blank">
-              <i class="fa-solid fa-file"></i>
-            </a>
-          `
-          documentCell.className = "document-ic"
+          let elm = ``
+          user.documents?.forEach((doc) => {
+            elm += `
+              <div>
+                <a href="${doc.documentURL}" target="_blank">
+                  ${doc.fileName}
+                </a>
+              </div>
+            `
+          })
+          documentCell.innerHTML = elm;
+          documentCell.className = "document-ic";
           row.appendChild(documentCell);
 
           const statusCell = document.createElement("td");
