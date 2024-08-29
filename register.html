@@ -431,7 +431,7 @@ display-flex, .signup-content, .form-row, .form-radio, .select-icon, .select-ico
                     <img src="img/signup-img.jpg" alt="">
                 </div>
                 <div class="signup-form" id="step1">
-                    <form method="POST" class="register-form" id="registrationForm" style="margin-top: 100px;">
+                    <form class="register-form" id="registrationForm" style="margin-top: 100px;" onsubmit="return showStep2(event)">
 
                       
                         <h2 style="font-weight: bold;"> Registration form</h2>
@@ -467,8 +467,8 @@ display-flex, .signup-content, .form-row, .form-radio, .select-icon, .select-ico
                                 <label for="state">Country :</label>
                                 
                                  
-                                    <select class="form-select country" id="country" aria-label="Default select example" onchange="loadStates()">
-                                        <option selected>Select Country</option>
+                                    <select class="form-select country" id="country" required aria-label="Default select example" onchange="loadStates()">
+                                        <option selected disabled value="">Select Country</option>
                                     </select>
                                    
                                 
@@ -477,8 +477,8 @@ display-flex, .signup-content, .form-row, .form-radio, .select-icon, .select-ico
                             <div class="form-group">
                               <label for="state">State :</label>
                              
-                                <select class="form-select state" id="state" aria-label="Default select example" onchange="loadCities()">
-                                  <option selected>Select State</option>
+                                <select class="form-select state" id="state" aria-label="Default select example" onchange="loadCities()" required>
+                                  <option selected disabled value="">Select State</option>
                               </select>
                                   
                              
@@ -486,8 +486,8 @@ display-flex, .signup-content, .form-row, .form-radio, .select-icon, .select-ico
                             <div class="form-group">
                                 <label for="city">City :</label>
                                 
-                                  <select class="form-select city" id="city" aria-label="Default select example">
-                                    <option selected>Select City</option>
+                                  <select class="form-select city" id="city" aria-label="Default select example" required>
+                                    <option selected disabled value="">Select City</option>
                                 </select>
                                    
                                 
@@ -495,11 +495,11 @@ display-flex, .signup-content, .form-row, .form-radio, .select-icon, .select-ico
                        
                         <div class="form-group">
                             <label for="birth_date">DOB :</label>
-                            <input type="text" name="birth_date" id="birth_date">
+                            <input type="text" name="birth_date" id="birth_date" required>
                         </div>
                         <div class="form-group">
                             <label for="pincode">Pincode :</label>
-                            <input type="text" name="pincode" id="pincode">
+                            <input type="text" name="pincode" id="pincode" required>
                         </div>
                         <!--<div class="form-group">
                             <label for="course">Course :</label>
@@ -515,13 +515,13 @@ display-flex, .signup-content, .form-row, .form-radio, .select-icon, .select-ico
                         </div>-->
                         <div class="form-group">
                             <label for="email">Email ID :</label>
-                            <input type="email" name="email" id="email" />
+                            <input type="email" name="email" id="email" required />
                         </div>
                         <!--<div class="form-submit">
                             <input type="submit" value="Reset All" class="submit" name="reset" id="reset" />
                             <input type="submit" value="Submit Form" class="submit" name="submit" id="submit" />
                         </div>-->
-                        <button type="button" onclick="showStep2()">Next</button>
+                        <button type="submit">Next</button>
                     </form>
                 </div>
                 <div id="step2" style="display: none;">
@@ -799,7 +799,9 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const storage = getStorage(app);
 
-window.showStep2 = function showStep2() {
+window.showStep2 = function showStep2(e) {
+  e.preventDefault()
+    document.getElementById('registrationForm')
     document.getElementById('step1').style.display = 'none';
     document.getElementById('step2').style.display = 'block';
 }
