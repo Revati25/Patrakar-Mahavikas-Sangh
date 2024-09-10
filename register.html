@@ -822,8 +822,8 @@ async function submitForm(e) {
     const email = document.getElementById('email').value;
 
     // Generate a unique ID and create a new user reference
-    const newUserRef = push(ref(database, 'users'));
-    const uid = newUserRef.key;
+    const uid = `APMV_${state}${push(ref(database)).key}`;
+    const newUserRef = ref(database, 'users/' + uid);
 
     let documentsURLs = [];
     let documentURL = null;
