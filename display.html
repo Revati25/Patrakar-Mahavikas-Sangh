@@ -297,9 +297,21 @@
             .then((snapshot) => {
               if (snapshot.exists()) {
                 const userData = snapshot.val();
-                const { first_name, last_name, address, country, state, city, birth_date, pincode, email, approvalStatus } = userData
-                if(approvalStatus === "APPROVED") {
-                    document.getElementById("userData").innerHTML = `
+                const {
+                  first_name,
+                  last_name,
+                  address,
+                  country,
+                  state,
+                  city,
+                  birth_date,
+                  pincode,
+                  email,
+                  approvalStatus,
+                  documents,
+                } = userData;
+                if (approvalStatus === "APPROVED") {
+                  document.getElementById("userData").innerHTML = `
                         <strong>First Name:</strong> ${first_name}<br>
                  <strong>Last Name:</strong> ${last_name}<br>
                 <strong> Address:</strong> ${address}<br>
@@ -309,12 +321,15 @@
                                 <strong>  Date Of Birth:</strong> ${birth_date}<br>
                                     <strong> Pincode:</strong> ${pincode}<br>
                                         <strong> Email:</strong> ${email}<br>
-                            <p><strong>Document:</strong> <a href="${userData.documentURL}" target="_blank">View Document</a></p>
+                            <p><strong>Document:</strong> ${documents.reduce(
+                              (acc, curt) =>
+                                acc + `<a href="${curt.documentURL}" target="_blank">${curt.fileName}</a>&nbsp;&nbsp;&nbsp;`, ""
+                            )}</p>
                         `;
                 } else {
-                document.getElementById("userData").innerHTML =
-                  "No data available for the provided Unique ID.";
-              }
+                  document.getElementById("userData").innerHTML =
+                    "No data available for the provided Unique ID.";
+                }
               } else {
                 document.getElementById("userData").innerHTML =
                   "No data available for the provided Unique ID.";

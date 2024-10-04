@@ -63,43 +63,48 @@
       }
       button:disabled {
         opacity: 0.5;
-        cursor:not-allowed;
+        cursor: not-allowed;
       }
       .fa-file {
         color: grey;
       }
       .fa-file:hover {
         color: #0056b3;
-        cursor:pointer;
+        cursor: pointer;
       }
       .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #333;
-            padding: 10px 20px;
-            color: white;
-        }
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #333;
+        padding: 10px 20px;
+        color: white;
+      }
 
-        .navbar .username {
-            font-size: 18px;
-        }
+      .navbar .username {
+        font-size: 18px;
+      }
 
-        .navbar .signout-btn {
-            background-color: #f44336;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px;
-        }
+      .navbar .signout-btn {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 16px;
+        border-radius: 5px;
+      }
 
-        .navbar .signout-btn:hover {
-            background-color: #d32f2f;
-        }
+      .navbar .signout-btn:hover {
+        background-color: #d32f2f;
+      }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
   </head>
 
   <body>
@@ -109,7 +114,7 @@
         <div id="role" class="username"></div>
       </div>
       <button id="signout-btn" class="signout-btn">Sign Out</button>
-  </div>
+    </div>
 
     <h1>Admin Dashboard</h1>
 
@@ -123,7 +128,7 @@
       </select>
     </div>
 
-    <table>
+    <table class="table-bordered">
       <thead>
         <tr>
           <th>User ID</th>
@@ -138,6 +143,27 @@
       <tbody id="user-table-body">
         <!-- User rows will be added dynamically here -->
       </tbody>
+      <!-- The Popup -->
+      <div class="modal fade" id="rejectModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Rejection confirmation</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="rejectionReasonText" class="form-label">Rejection Reason</label>
+                <textarea class="form-control" id="rejectionReasonText" rows="3"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" id="rejectButton" class="btn btn-danger">Reject</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </table>
     <script type="module">
       // Example list of users
@@ -153,6 +179,7 @@
         orderByChild,
         equalTo,
         update,
+        remove
       } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
       // Your web app's Firebase configuration
@@ -170,7 +197,10 @@
       const db = getDatabase(app);
       const usersRef = ref(db, "users");
       var usersList = [];
-      let level = localStorage.getItem("role")[1]
+      let level = localStorage.getItem("role")[1];
+      var currentSelectedUserId;
+      const myModalElement = document.getElementById('rejectModal');
+      const myModal = new bootstrap.Modal(myModalElement);
 
       async function fetchUsers() {
         try {
@@ -227,29 +257,42 @@
           row.appendChild(emailCell);
 
           const documentCell = document.createElement("td");
-          documentCell.innerHTML = `
-            <a href="${user.documentURL}" target="_blank">
-              <i class="fa-solid fa-file"></i>
-            </a>
-          `
-          documentCell.className = "document-ic"
+          let elm = ``;
+          user.documents?.forEach((doc) => {
+            elm += `
+              <div>
+                <a href="${doc.documentURL}" target="_blank">
+                  ${doc.fileName}
+                </a>
+              </div>
+            `;
+          });
+          documentCell.innerHTML = elm;
+          documentCell.className = "document-ic";
           row.appendChild(documentCell);
 
           const statusCell = document.createElement("td");
-          statusCell.textContent = getStatus(user.approvalStatus, user.approvalLevel);
+          statusCell.textContent = getStatus(
+            user.approvalStatus,
+            user.approvalLevel
+          );
           row.appendChild(statusCell);
 
           const actionCell = document.createElement("td");
           const approveButton = document.createElement("button");
           approveButton.textContent = "Approve";
           approveButton.disabled = !(user.approvalLevel == level);
-          approveButton.className = "approve-btn"
+          approveButton.className = "approve-btn";
           approveButton.onclick = () => approveUser(user.id);
           actionCell.appendChild(approveButton);
           const rejectButton = document.createElement("button");
           rejectButton.textContent = "Reject";
           rejectButton.disabled = !(user.approvalLevel == level);
-          rejectButton.onclick = () => rejectUser(user.id);
+          rejectButton.setAttribute('data-bs-toggle',"modal");
+          rejectButton.setAttribute('data-bs-target',"#rejectModal");
+          rejectButton.onclick = () => {
+            currentSelectedUserId = user.id
+          }
           rejectButton.style.backgroundColor = "red";
           rejectButton.style.marginLeft = "10px";
           actionCell.appendChild(rejectButton);
@@ -261,13 +304,16 @@
 
       async function approveUser(userId) {
         const userRef = ref(db, "users/" + userId);
-        let snapshot = await get(userRef)
-        if(snapshot.exists()) {
+        let snapshot = await get(userRef);
+        if (snapshot.exists()) {
           let user = snapshot.val();
-          console.log(user)
+          console.log(user);
         }
 
-        update(userRef, { approvalStatus: level == 3 ? "APPROVED": "PENDING", approvalLevel: Number(level) + 1 })
+        update(userRef, {
+          approvalStatus: level == 3 ? "APPROVED" : "PENDING",
+          approvalLevel: Number(level) + 1,
+        })
           .then(() => {
             alert(userId + " approved!");
             fetchUsers();
@@ -275,15 +321,15 @@
           .catch((error) => console.log(error));
       }
 
-      function rejectUser(userId) {
-        const userRef = ref(db, "users/" + userId);
-
-        update(userRef, { approvalStatus: "REJECT" })
-          .then(() => {
-            alert(userId + " rejected!");
-            fetchUsers();
-          })
-          .catch((error) => console.log(error));
+      function rejectUser() {
+        const userRef = ref(db, "users/" + currentSelectedUserId);
+        remove(userRef).then(() => {
+          let desc = document.getElementById("rejectionReasonText").value;
+          console.log(desc);    
+          myModal.hide();
+          document.getElementById("rejectionReasonText").value
+          fetchUsers()
+        }).catch(e => console.log(error))
       }
 
       function filterUsers() {
@@ -296,9 +342,7 @@
         const statusFilter = document.getElementById("statusFilter").value;
 
         const filteredUsers = usersList.filter((user) => {
-          const matchesUsername = user.id
-            .toLowerCase()
-            .includes(userIdFilter);
+          const matchesUsername = user.id.toLowerCase().includes(userIdFilter);
           const matchesEmail = user.email.toLowerCase().includes(emailFilter);
           const matchesStatus =
             statusFilter === "all" ||
@@ -314,13 +358,15 @@
 
       function signout() {
         localStorage.clear();
-        window.location.href = "index.html"
+        window.location.href = "index.html";
       }
 
       function init() {
-        fetchUsers()
-        document.getElementById("username").innerHTML = "Username: " + localStorage.getItem("username")
-        document.getElementById("role").innerHTML = "Role: " +localStorage.getItem("role")
+        fetchUsers();
+        document.getElementById("username").innerHTML =
+          "Username: " + localStorage.getItem("username");
+        document.getElementById("role").innerHTML =
+          "Role: " + localStorage.getItem("role");
       }
 
       // Load the user list when the page loads
@@ -334,7 +380,9 @@
         .getElementById("statusFilter")
         .addEventListener("change", filterUsers);
 
-      document.getElementById("signout-btn").addEventListener("click", signout)
+      document.getElementById("rejectButton").addEventListener('click', rejectUser)
+
+      document.getElementById("signout-btn").addEventListener("click", signout);
       window.onload = init;
     </script>
   </body>
